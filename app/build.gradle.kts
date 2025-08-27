@@ -76,6 +76,7 @@ dependencies {
 // recognize text without requiring network connectivity. According to
 // Google's documentation, you create an InputImage from a Bitmap,
 // media.Image or file URI, then call TextRecognizer.process() to get
+
 // recognized text【129670371780221†L342-L392】.
     implementation("com.google.mlkit:text-recognition:16.0.0")
 
@@ -86,4 +87,6 @@ dependencies {
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("com.squareup.retrofit2:retrofit:2.11.0")
     implementation("com.squareup.retrofit2:converter-moshi:2.11.0")
+
+    implementation("com.squareup.retrofit2:converter-gson:2.11.0")
 }

@@ -1,8 +1,8 @@
 package com.example.aasc.net
 
-import okhttp3.OkHttpClient
 import retrofit2.Retrofit
-import retrofit2.converter.moshi.MoshiConverterFactory
+import retrofit2.converter.gson.GsonConverterFactory
+import okhttp3.OkHttpClient
 import java.util.concurrent.TimeUnit
 
 object VisionClient {
@@ -13,7 +13,7 @@ object VisionClient {
     val api: VisionService = Retrofit.Builder()
         .baseUrl("https://vision.googleapis.com/")
         .client(ok)
-        .addConverterFactory(MoshiConverterFactory.create())
+        .addConverterFactory(GsonConverterFactory.create())  // <-- Gson
         .build()
         .create(VisionService::class.java)
 }
