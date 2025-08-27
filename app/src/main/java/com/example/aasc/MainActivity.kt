@@ -17,6 +17,7 @@ import android.content.Context
 import android.content.pm.PackageManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.camera.core.ExperimentalGetImage
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageCapture
 import androidx.camera.core.ImageCaptureException
@@ -350,13 +351,14 @@ fun CameraPreview(
  * documentation, you create an [InputImage] from the camera output and pass
  * it to [TextRecognizer.process]【129670371780221†L342-L392】【129670371780221†L649-L659】.
  */
+@androidx.annotation.OptIn(ExperimentalGetImage::class)
 fun processImageProxy(
     imageProxy: ImageProxy,
     context: Context,
     onResult: (String) -> Unit
 ) {
-//    val mediaImage = imageProxy.image
-    val mediaImage = null
+    val mediaImage = imageProxy.image
+//    val mediaImage = null
     if (mediaImage != null) {
         val image = InputImage.fromMediaImage(mediaImage, imageProxy.imageInfo.rotationDegrees)
         val recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
@@ -374,3 +376,5 @@ fun processImageProxy(
         imageProxy.close()
     }
 }
+
+
