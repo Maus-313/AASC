@@ -81,4 +81,9 @@ dependencies {
 
 // Coroutines for background processing
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
+
+// add networking dep
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
+    implementation("com.squareup.retrofit2:retrofit:2.11.0")
+    implementation("com.squareup.retrofit2:converter-moshi:2.11.0")
 }

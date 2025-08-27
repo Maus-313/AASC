@@ -15,6 +15,7 @@ import com.example.aasc.ui.theme.AASCTheme
 import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.core.ExperimentalGetImage
@@ -42,6 +43,10 @@ import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.asExecutor
+import com.example.aasc.net.*
+import com.example.aasc.util.imageProxyToBase64Jpeg
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -77,6 +82,8 @@ fun AppScreen(
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
     ) { granted -> hasCameraPermission = granted }
+    val scope = rememberCoroutineScope()
+    val apiKey = "YOUR_RESTRICTED_API_KEY" // For dev only; restrict in GCP & move server-side before shipping
 
     LaunchedEffect(Unit) {
         // Check the current permission state and request if necessary.
@@ -171,9 +178,10 @@ fun AppScreen(
                         Text(stringResource(id = R.string.manual_mode))
                     }
                     Button(onClick = {
-                        mode = CameraMode.AUTO
-                        recognizedText = ""
-                        analysisEnabled = true
+//                        mode = CameraMode.AUTO
+//                        recognizedText = ""
+//                        analysisEnabled = true
+                        Toast.makeText(context, "This feature has been removed", Toast.LENGTH_LONG).show()
                     }) {
                         Text(stringResource(id = R.string.automated_mode))
                     }
@@ -188,9 +196,16 @@ fun AppScreen(
                                 object : ImageCapture.OnImageCapturedCallback() {
                                     override fun onCaptureSuccess(imageProxy: ImageProxy) {
                                         // Process the captured frame with ML Kit and update the UI
-                                        processImageProxy(imageProxy, context) { text ->
-                                            recognizedText = text
-                                        }
+//                                        processImageProxy(imageProxy, context) { text ->
+//                                            recognizedText = text
+//                                        }
+
+//                                         Cloud Vision:
+                                        processImageProxy_CloudVision(
+                                            imageProxy = imageProxy,
+                                            apiKey = apiKey,
+                                            scope = scope
+                                        ) { text -> recognizedText = text }
                                     }
 
                                     override fun onError(exception: ImageCaptureException) {
@@ -214,20 +229,20 @@ fun AppScreen(
                 }
                 CameraMode.AUTO -> {
                     // Automated capture: left button toggles start/stop for the analyzer.
-                    Button(onClick = {
-                        analysisEnabled = !analysisEnabled
-                    }) {
-                        Text(if (analysisEnabled) stringResource(id = R.string.stop) else stringResource(id = R.string.start))
-                    }
-                    // Right button returns to the home screen and resets state.
-                    Button(onClick = {
-                        mode = CameraMode.NONE
-                        recognizedText = ""
-                        analysisEnabled = false
-                        imageCaptureRef = null
-                    }) {
-                        Text(stringResource(id = R.string.home))
-                    }
+//                    Button(onClick = {
+//                        analysisEnabled = !analysisEnabled
+//                    }) {
+//                        Text(if (analysisEnabled) stringResource(id = R.string.stop) else stringResource(id = R.string.start))
+//                    }
+//                    // Right button returns to the home screen and resets state.
+//                    Button(onClick = {
+//                        mode = CameraMode.NONE
+//                        recognizedText = ""
+//                        analysisEnabled = false
+//                        imageCaptureRef = null
+//                    }) {
+//                        Text(stringResource(id = R.string.home))
+//                    }
                 }
             }
         }
@@ -309,13 +324,13 @@ fun CameraPreview(
             cameraProvider.unbindAll()
             if (mode == CameraMode.AUTO) {
                 // Bind preview, capture and analysis when in automated mode.
-                cameraProvider.bindToLifecycle(
-                    lifecycleOwner,
-                    cameraSelector,
-                    preview,
-                    imageCapture,
-                    imageAnalysis
-                )
+//                cameraProvider.bindToLifecycle(
+//                    lifecycleOwner,
+//                    cameraSelector,
+//                    preview,
+//                    imageCapture,
+//                    imageAnalysis
+//                )
             } else {
                 // Bind only preview and capture for manual mode.
                 cameraProvider.bindToLifecycle(
@@ -378,3 +393,34 @@ fun processImageProxy(
 }
 
 
+fun processImageProxy_CloudVision(
+    imageProxy: ImageProxy,
+    apiKey: String,
+    scope: CoroutineScope,
+    onResult: (String) -> Unit
+) {
+    // Convert to Base64 JPEG on a background thread and call Vision
+    val base64 = imageProxyToBase64Jpeg(imageProxy)
+    imageProxy.close() // Close ASAP after you have the bytes
+
+    val body = AnnotateImageRequest(
+        requests = listOf(
+            RequestItem(
+                image = ImagePayload(content = base64),
+                features = listOf(Feature(type = "DOCUMENT_TEXT_DETECTION")),
+                // Optional: language hints, if you know likely scripts
+                imageContext = ImageContext(languageHints = listOf("en"))
+            )
+        )
+    )
+
+    scope.launch(Dispatchers.IO) {
+        try {
+            val resp = VisionClient.api.annotate(body, apiKey)
+            val text = resp.responses.firstOrNull()?.fullTextAnnotation?.text.orEmpty()
+            onResult(if (text.isBlank()) "(No text found)" else text)
+        } catch (e: Exception) {
+            onResult("Vision API error: ${e.localizedMessage}")
+        }
+    }
+}
