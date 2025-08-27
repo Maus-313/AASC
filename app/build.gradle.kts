@@ -18,6 +18,14 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    // The Google Vision API key is provided via a JSON file. If you have
+    // placed your service account JSON in the app module's root directory
+    // with the name "vision_api_key.json", it can be bundled into your
+    // application by uncommenting the following line and adding the file to
+    // src/main/res/raw/. The JSON itself should never be checked into
+    // version control.
+    // resValue "string", "google_vision_api_key", file("src/main/res/raw/vision_api_key.json").text
+
     buildTypes {
         release {
             isMinifyEnabled = false
