@@ -195,12 +195,13 @@ fun AppScreen(
                                 ContextCompat.getMainExecutor(context),
                                 object : ImageCapture.OnImageCapturedCallback() {
                                     override fun onCaptureSuccess(imageProxy: ImageProxy) {
+
                                         // Process the captured frame with ML Kit and update the UI
 //                                        processImageProxy(imageProxy, context) { text ->
 //                                            recognizedText = text
 //                                        }
 
-//                                         Cloud Vision:
+//                                      Cloud Vision:
                                         processImageProxy_CloudVision(
                                             imageProxy = imageProxy,
                                             apiKey = apiKey,
